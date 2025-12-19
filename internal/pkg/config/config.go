@@ -11,6 +11,11 @@ import (
 	"github.com/goccy/go-yaml"
 )
 
+var (
+	ErrNoDirectories    = fmt.Errorf("no directories specified in config")
+	ErrNoRefreshSeconds = fmt.Errorf("no refreshSeconds specified in config")
+)
+
 type Config struct {
 	Directories    []string `yaml:"directories"`
 	RefreshSeconds int      `yaml:"refreshSeconds"`
@@ -22,11 +27,23 @@ func LoadConfig() (cfg *Config, err error) {
 
 	body, err := loadConfigfile(fileSystem)
 	if err != nil {
+		err = fmt.Errorf("failed to load config file: %v", err)
 		return
 	}
 
 	cfg, err = parseConfig(body)
 	if err != nil {
+		err = fmt.Errorf("failed to parse config file: %w", err)
+		return
+	}
+
+	if len(cfg.Directories) == 0 {
+		err = ErrNoDirectories
+		return
+	}
+
+	if cfg.RefreshSeconds == 0 {
+		err = ErrNoRefreshSeconds
 		return
 	}
 

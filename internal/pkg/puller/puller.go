@@ -25,12 +25,37 @@ func Pull(path string) (changes bool, err error) {
 		RemoteName: "origin",
 	})
 
-	if fetchErr != nil && !errors.Is(fetchErr, git.NoErrAlreadyUpToDate) {
+	if fetchErr != nil {
+		if errors.Is(fetchErr, git.NoErrAlreadyUpToDate) {
+			return
+		}
+
 		err = fmt.Errorf("failed to fetch repository: %w", fetchErr)
 		return
 	}
 
 	changes = true
+
+	worktree, err := repo.Worktree()
+	if err != nil {
+		err = fmt.Errorf("failed to get worktree: %w", err)
+		return
+	}
+
+	pullErr := worktree.Pull(&git.PullOptions{
+		RemoteName: "origin",
+		Auth:       auth,
+	})
+
+	if pullErr != nil {
+		if errors.Is(pullErr, git.NoErrAlreadyUpToDate) {
+			err = fmt.Errorf("changes were detected but repo was already up to date on pull: %w", pullErr)
+			return
+		}
+
+		err = fmt.Errorf("failed to pull repository: %w", pullErr)
+		return
+	}
 
 	return
 }
