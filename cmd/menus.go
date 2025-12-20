@@ -9,13 +9,13 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func menus(ctx context.Context) (items []menuet.MenuItem) {
+func menus(ctx context.Context, app *menuet.Application) (items []menuet.MenuItem) {
 	items = []menuet.MenuItem{}
 
 	showRepos := menuet.MenuItem{
 		Type:    menuet.Regular,
 		Text:    "Show Directories",
-		Clicked: func() { showDirectories(ctx) },
+		Clicked: func() { showDirectories(ctx, app) },
 	}
 
 	checkNow := menuet.MenuItem{
@@ -32,12 +32,12 @@ func menus(ctx context.Context) (items []menuet.MenuItem) {
 	return
 }
 
-func showDirectories(ctx context.Context) {
+func showDirectories(ctx context.Context, app *menuet.Application) {
 	err := config.LoadConfig(ctx)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("failed to load config")
-		menuet.App().SetMenuState(&menuet.MenuState{Image: warningIcon})
-		menuet.App().Alert(menuet.Alert{
+		app.SetMenuState(&menuet.MenuState{Image: warningIcon})
+		app.Alert(menuet.Alert{
 			MessageText:     "Failed to load config",
 			InformativeText: err.Error(),
 		})
@@ -49,7 +49,7 @@ func showDirectories(ctx context.Context) {
 		builder.WriteString("• " + dir + "\n") //nolint:errcheck
 	}
 
-	menuet.App().Alert(menuet.Alert{
+	app.Alert(menuet.Alert{
 		MessageText:     "Registered Directories",
 		InformativeText: builder.String(),
 	})

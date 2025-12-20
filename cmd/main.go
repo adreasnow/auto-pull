@@ -22,35 +22,44 @@ var (
 )
 
 func main() {
-	ctx := context.Background()
+	ctx := startLogger()
 
+	app := initApp(ctx)
+
+	go loop(app, ctx)
+
+	app.RunApplication()
+}
+
+func startLogger() context.Context {
 	logFile := lumberjack.Logger{
 		Filename:   path.Join(os.Getenv("HOME"), "Library", "Logs", bundleName, "logs.log"),
 		MaxBackups: 5,
 		MaxSize:    2,
 	}
 
-	ctx = zerolog.New(
+	return zerolog.New(
 		io.MultiWriter(
 			zerolog.ConsoleWriter{Out: os.Stderr},
 			&logFile),
-	).With().Timestamp().Logger().WithContext(ctx)
+	).With().Timestamp().Logger().WithContext(context.Background())
+}
+
+func initApp(ctx context.Context) *menuet.Application {
+	app := menuet.App()
+	app.Label = bundleName
+	app.Children = func() []menuet.MenuItem { return menus(ctx, app) }
+	app.SetMenuState(&menuet.MenuState{Image: successIcon})
+	app.NotificationResponder = func(id, response string) {}
 
 	err := config.LoadConfig(ctx)
 	if err != nil {
-		menuet.App().Alert(menuet.Alert{
+		app.Alert(menuet.Alert{
 			MessageText:     "Failed to load config",
 			InformativeText: err.Error(),
 		})
 		zerolog.Ctx(ctx).Fatal().Err(err).Msg("failed to load config")
 	}
 
-	go loop(ctx)
-
-	menuet.App().Label = bundleName
-
-	menuet.App().Children = func() []menuet.MenuItem { return menus(ctx) }
-
-	menuet.App().SetMenuState(&menuet.MenuState{Image: successIcon})
-	menuet.App().RunApplication()
+	return app
 }
