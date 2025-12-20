@@ -14,7 +14,7 @@ import (
 func tick(ctx context.Context) {
 	menuet.App().SetMenuState(&menuet.MenuState{Image: pullingIcon})
 
-	cfg, err := config.LoadConfig(ctx)
+	err := config.LoadConfig(ctx)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("failed to load config")
 		menuet.App().SetMenuState(&menuet.MenuState{Image: warningIcon})
@@ -30,9 +30,9 @@ func tick(ctx context.Context) {
 
 	var success atomic.Bool
 	success.Store(true)
-	for _, dir := range cfg.Directories {
+	for _, dir := range config.Config.Directories {
 		wg.Go(func() {
-			status := checkDir(ctx, cfg, dir)
+			status := checkDir(ctx, dir)
 			success.Store(status && success.Load())
 		})
 	}
@@ -45,9 +45,9 @@ func tick(ctx context.Context) {
 	}
 }
 
-func checkDir(ctx context.Context, cfg *config.Config, dir string) (success bool) {
+func checkDir(ctx context.Context, dir string) (success bool) {
 	zerolog.Ctx(ctx).Info().Str("dir", dir).Msg("checking directory")
-	changes, err := puller.Pull(cfg, dir)
+	changes, err := puller.Pull(dir)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Str("dir", dir).Msg("failed to fetch")
 		menuet.App().SetMenuState(&menuet.MenuState{Image: warningIcon})

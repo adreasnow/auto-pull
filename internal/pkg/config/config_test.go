@@ -28,60 +28,62 @@ func TestParseConfig(t *testing.T) {
 
 	data := []byte("directories:\n  - /test/path\nrefreshSeconds: 60")
 
-	cfg, err := parseConfig(data)
+	c := &config{}
+
+	err := c.parseConfig(data)
 	require.NoError(t, err)
 
-	assert.Len(t, cfg.Directories, 1)
-	assert.Equal(t, cfg.Directories[0], "/test/path")
-	assert.Equal(t, cfg.RefreshSeconds, 60)
+	assert.Len(t, c.Directories, 1)
+	assert.Equal(t, c.Directories[0], "/test/path")
+	assert.Equal(t, c.RefreshSeconds, 60)
 }
 
 func TestCleanTildeDirs(t *testing.T) {
 	t.Parallel()
 
-	cfg := &Config{
+	c := &config{
 		Directories: []string{"~/test/path"},
 	}
 
-	cfg.cleanTildeDirs()
+	c.cleanTildeDirs()
 
-	splitLine := strings.Split(cfg.Directories[0], "/")
+	splitLine := strings.Split(c.Directories[0], "/")
 	require.Greater(t, len(splitLine), 1)
 
 	assert.Contains(t, []string{"Users", "home"}, splitLine[1])
 
-	fmt.Println(cfg.Directories)
+	fmt.Println(c.Directories)
 }
 
 func TestExpandTrailingWildCardDirs(t *testing.T) {
 	t.Parallel()
 
-	cfg := &Config{
+	c := &config{
 		Directories: []string{
 			"/usr/*",
 			"/test/dir",
 		},
 	}
 
-	err := cfg.expandTrailingWildCardDirs()
+	err := c.expandTrailingWildCardDirs()
 	require.NoError(t, err)
 
-	assert.Greater(t, len(cfg.Directories), 2)
-	assert.Contains(t, cfg.Directories, "/usr/lib")
+	assert.Greater(t, len(c.Directories), 2)
+	assert.Contains(t, c.Directories, "/usr/lib")
 }
 
 func TestCheckForGit(t *testing.T) {
 	t.Parallel()
 
-	cfg := &Config{
+	c := &config{
 		Directories: []string{
 			"/usr/lib",
 			"/Users/adrea/Downloads/dotfiles",
 		},
 	}
 
-	cfg.checkForGit()
+	c.checkForGit()
 
-	assert.Len(t, cfg.Directories, 1)
-	assert.NotContains(t, cfg.Directories, "/usr/lib")
+	assert.Len(t, c.Directories, 1)
+	assert.NotContains(t, c.Directories, "/usr/lib")
 }

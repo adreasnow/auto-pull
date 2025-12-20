@@ -11,7 +11,7 @@ import (
 	"github.com/go-git/go-git/v6/plumbing/transport/http"
 )
 
-func setupAuth(cfg *config.Config, repo *git.Repository) (auth transport.AuthMethod, remote *git.Remote, err error) {
+func setupAuth(repo *git.Repository) (auth transport.AuthMethod, remote *git.Remote, err error) {
 	remote, err = repo.Remote("origin")
 	if err != nil {
 		err = fmt.Errorf("failed to get remote: %w", err)
@@ -38,7 +38,7 @@ func setupAuth(cfg *config.Config, repo *git.Repository) (auth transport.AuthMet
 	case "https":
 		token, found := os.LookupEnv("GITHUB_TOKEN")
 		if !found {
-			token = cfg.GithubToken
+			token = config.Config.GithubToken
 			if token == "" {
 				err = fmt.Errorf("githubToken config or GITHUB_TOKEN environment variable not set")
 				return

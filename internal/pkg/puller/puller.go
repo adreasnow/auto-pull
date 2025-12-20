@@ -4,18 +4,17 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/adreasnow/auto-pull/internal/pkg/config"
 	"github.com/go-git/go-git/v6"
 )
 
-func Pull(cfg *config.Config, path string) (changes bool, err error) {
+func Pull(path string) (changes bool, err error) {
 	repo, err := git.PlainOpen(path)
 	if err != nil {
 		err = fmt.Errorf("failed to open repository for %s: %w", path, err)
 		return
 	}
 
-	auth, remote, err := setupAuth(cfg, repo)
+	auth, remote, err := setupAuth(repo)
 	if err != nil {
 		err = fmt.Errorf("failed to setup auth for %s: %w", path, err)
 		return

@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func menus(cfg *config.Config, ctx context.Context) (items []menuet.MenuItem) {
+func menus(ctx context.Context) (items []menuet.MenuItem) {
 	items = []menuet.MenuItem{}
 
 	showRepos := menuet.MenuItem{
@@ -21,7 +21,7 @@ func menus(cfg *config.Config, ctx context.Context) (items []menuet.MenuItem) {
 	checkNow := menuet.MenuItem{
 		Type:    menuet.Regular,
 		Text:    "Check Now",
-		Clicked: func() { checkNow(cfg, ctx) },
+		Clicked: checkNow,
 	}
 
 	items = append(items,
@@ -33,7 +33,7 @@ func menus(cfg *config.Config, ctx context.Context) (items []menuet.MenuItem) {
 }
 
 func showDirectories(ctx context.Context) {
-	cfg, err := config.LoadConfig(ctx)
+	err := config.LoadConfig(ctx)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("failed to load config")
 		menuet.App().SetMenuState(&menuet.MenuState{Image: warningIcon})
@@ -45,7 +45,7 @@ func showDirectories(ctx context.Context) {
 	}
 
 	builder := strings.Builder{}
-	for _, dir := range cfg.Directories {
+	for _, dir := range config.Config.Directories {
 		builder.WriteString("• " + dir + "\n") //nolint:errcheck
 	}
 
@@ -55,6 +55,6 @@ func showDirectories(ctx context.Context) {
 	})
 }
 
-func checkNow(cfg *config.Config, ctx context.Context) {
-	cfg.TickNow <- true
+func checkNow() {
+	tickNow <- struct{}{}
 }

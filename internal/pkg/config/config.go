@@ -9,9 +9,14 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/goccy/go-yaml"
 	"github.com/rs/zerolog"
+)
+
+var (
+	Config = &config{}
 )
 
 var (
@@ -19,14 +24,19 @@ var (
 	ErrNoRefreshSeconds = fmt.Errorf("no refreshSeconds specified in config")
 )
 
-type Config struct {
-	Directories    []string  `yaml:"directories"`
-	RefreshSeconds int       `yaml:"refreshSeconds"`
-	GithubToken    string    `yaml:"githubToken"`
-	TickNow        chan bool `yaml:"-"`
+type ticker struct {
+	RefreshSeconds int
+	Ticker         time.Ticker
+	TickNow        chan struct{}
 }
 
-func LoadConfig(ctx context.Context) (cfg *Config, err error) {
+type config struct {
+	Directories    []string `yaml:"directories"`
+	RefreshSeconds int      `yaml:"refreshSeconds"`
+	GithubToken    string   `yaml:"githubToken"`
+}
+
+func LoadConfig(ctx context.Context) (err error) {
 	dirPath := path.Join(os.Getenv("HOME"), ".config/auto-pull")
 	fileSystem := os.DirFS(dirPath)
 
@@ -36,27 +46,25 @@ func LoadConfig(ctx context.Context) (cfg *Config, err error) {
 		return
 	}
 
-	cfg, err = parseConfig(body)
+	err = Config.parseConfig(body)
 	if err != nil {
 		err = fmt.Errorf("failed to parse config file: %w", err)
 		return
 	}
 
-	if len(cfg.Directories) == 0 {
+	if len(Config.Directories) == 0 {
 		err = ErrNoDirectories
 		return
 	}
 
-	if cfg.RefreshSeconds == 0 {
+	if Config.RefreshSeconds == 0 {
 		err = ErrNoRefreshSeconds
 		return
 	}
 
-	cfg.TickNow = make(chan bool)
-
 	zerolog.Ctx(ctx).Info().
-		Strs("directories", cfg.Directories).
-		Int("refreshSeconds", cfg.RefreshSeconds).
+		Strs("directories", Config.Directories).
+		Int("refreshSeconds", Config.RefreshSeconds).
 		Msg("config loaded")
 
 	return
@@ -81,22 +89,21 @@ func loadConfigfile(fileSystem fs.FS) (body []byte, err error) {
 	return
 }
 
-func parseConfig(data []byte) (cfg *Config, err error) {
-	cfg = &Config{}
-	if err = yaml.Unmarshal(data, cfg); err != nil {
+func (c *config) parseConfig(data []byte) (err error) {
+	if err = yaml.Unmarshal(data, c); err != nil {
 		yaml.FormatError(err, true, true)
 		err = fmt.Errorf("failed to unmarshal config file: %w", err)
 		return
 	}
 
-	cfg.cleanTildeDirs()
-	cfg.expandTrailingWildCardDirs()
-	cfg.checkForGit()
+	c.cleanTildeDirs()
+	c.expandTrailingWildCardDirs()
+	c.checkForGit()
 
 	return
 }
 
-func (c *Config) cleanTildeDirs() {
+func (c *config) cleanTildeDirs() {
 	for i, dir := range c.Directories {
 		if strings.HasPrefix(dir, "~") {
 			c.Directories[i] = strings.Replace(dir, "~", os.Getenv("HOME"), 1)
@@ -104,7 +111,7 @@ func (c *Config) cleanTildeDirs() {
 	}
 }
 
-func (c *Config) expandTrailingWildCardDirs() (err error) {
+func (c *config) expandTrailingWildCardDirs() (err error) {
 	newDirectoryList := []string{}
 
 	for _, dir := range c.Directories {
@@ -132,7 +139,7 @@ func (c *Config) expandTrailingWildCardDirs() (err error) {
 	return
 }
 
-func (c *Config) checkForGit() {
+func (c *config) checkForGit() {
 	newDirectoryList := []string{}
 
 	for _, dir := range c.Directories {

@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"path"
-	"time"
 
 	"github.com/adreasnow/auto-pull/internal/pkg/config"
 	"github.com/caseymrm/menuet"
@@ -17,10 +16,9 @@ var (
 	warningIcon = "warning.png"
 	successIcon = "sun.png"
 	pullingIcon = "cloud.png"
-)
+	bundleName  = "com.github.adreasnow.auto-pull"
 
-var (
-	bundleName = "com.github.adreasnow.auto-pull"
+	tickNow = make(chan struct{})
 )
 
 func main() {
@@ -38,7 +36,7 @@ func main() {
 			&logFile),
 	).With().Timestamp().Logger().WithContext(ctx)
 
-	cfg, err := config.LoadConfig(ctx)
+	err := config.LoadConfig(ctx)
 	if err != nil {
 		menuet.App().Alert(menuet.Alert{
 			MessageText:     "Failed to load config",
@@ -47,25 +45,12 @@ func main() {
 		zerolog.Ctx(ctx).Fatal().Err(err).Msg("failed to load config")
 	}
 
-	go loop(ctx, cfg)
+	go loop(ctx)
 
 	menuet.App().Label = bundleName
 
-	menuet.App().Children = func() []menuet.MenuItem { return menus(cfg, ctx) }
+	menuet.App().Children = func() []menuet.MenuItem { return menus(ctx) }
 
 	menuet.App().SetMenuState(&menuet.MenuState{Image: successIcon})
 	menuet.App().RunApplication()
-}
-
-func loop(ctx context.Context, cfg *config.Config) {
-	ticker := time.NewTicker(time.Second * time.Duration(cfg.RefreshSeconds))
-	for {
-		select {
-		case <-ticker.C:
-			tick(ctx)
-
-		case <-cfg.TickNow:
-			tick(ctx)
-		}
-	}
 }
