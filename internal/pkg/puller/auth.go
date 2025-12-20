@@ -1,25 +1,26 @@
 package puller
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
+	"github.com/adreasnow/auto-pull/internal/pkg/config"
 	"github.com/go-git/go-git/v6"
 	"github.com/go-git/go-git/v6/plumbing/transport"
 	"github.com/go-git/go-git/v6/plumbing/transport/http"
-	"github.com/go-git/go-git/v6/plumbing/transport/ssh"
 )
 
-func setupAuth(repo *git.Repository) (auth transport.AuthMethod, remote *git.Remote, err error) {
+func setupAuth(cfg *config.Config, repo *git.Repository) (auth transport.AuthMethod, remote *git.Remote, err error) {
 	remote, err = repo.Remote("origin")
 	if err != nil {
 		err = fmt.Errorf("failed to get remote: %w", err)
 		return
 	}
 
-	cfg := remote.Config()
+	remoteCfg := remote.Config()
 
-	tp, err := transport.NewEndpoint(cfg.URLs[0])
+	tp, err := transport.NewEndpoint(remoteCfg.URLs[0])
 	if err != nil {
 		err = fmt.Errorf("failed to create transport endpoint: %w", err)
 		return
@@ -27,17 +28,21 @@ func setupAuth(repo *git.Repository) (auth transport.AuthMethod, remote *git.Rem
 
 	switch tp.Scheme {
 	case "ssh":
-		auth, err = ssh.DefaultAuthBuilder("git")
-		if err != nil {
-			err = fmt.Errorf("failed to create SSH auth method: %w", err)
-			return
-		}
+		err = errors.New("ssh protocol not supported")
+		return
 
-	case "https", "http":
+	case "http":
+		err = errors.New("http protocol not supported")
+		return
+
+	case "https":
 		token, found := os.LookupEnv("GITHUB_TOKEN")
 		if !found {
-			err = fmt.Errorf("GITHUB_TOKEN environment variable not set")
-			return
+			token = cfg.GithubToken
+			if token == "" {
+				err = fmt.Errorf("githubToken config or GITHUB_TOKEN environment variable not set")
+				return
+			}
 		}
 
 		auth = &http.BasicAuth{

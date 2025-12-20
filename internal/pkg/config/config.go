@@ -1,14 +1,17 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/fs"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/goccy/go-yaml"
+	"github.com/rs/zerolog"
 )
 
 var (
@@ -19,9 +22,10 @@ var (
 type Config struct {
 	Directories    []string `yaml:"directories"`
 	RefreshSeconds int      `yaml:"refreshSeconds"`
+	GithubToken    string   `yaml:"githubToken"`
 }
 
-func LoadConfig() (cfg *Config, err error) {
+func LoadConfig(ctx context.Context) (cfg *Config, err error) {
 	dirPath := path.Join(os.Getenv("HOME"), ".config/auto-pull")
 	fileSystem := os.DirFS(dirPath)
 
@@ -46,6 +50,11 @@ func LoadConfig() (cfg *Config, err error) {
 		err = ErrNoRefreshSeconds
 		return
 	}
+
+	zerolog.Ctx(ctx).Info().
+		Strs("directories", cfg.Directories).
+		Int("refreshSeconds", cfg.RefreshSeconds).
+		Msg("config loaded")
 
 	return
 }
@@ -78,14 +87,56 @@ func parseConfig(data []byte) (cfg *Config, err error) {
 	}
 
 	cfg.cleanTildeDirs()
+	cfg.expandTrailingWildCardDirs()
+	cfg.checkForGit()
 
 	return
 }
 
 func (c *Config) cleanTildeDirs() {
 	for i, dir := range c.Directories {
-		if dir[0] == '~' {
+		if strings.HasPrefix(dir, "~") {
 			c.Directories[i] = strings.Replace(dir, "~", os.Getenv("HOME"), 1)
 		}
 	}
+}
+
+func (c *Config) expandTrailingWildCardDirs() (err error) {
+	newDirectoryList := []string{}
+
+	for _, dir := range c.Directories {
+		if strings.HasSuffix(dir, "/*") {
+			parentDir := dir[0 : len(dir)-2]
+
+			files, err := os.ReadDir(parentDir)
+			if err != nil {
+				err = fmt.Errorf("failed to read directory: %w", err)
+				return err
+			}
+
+			for _, f := range files {
+				if f.IsDir() {
+					newDirectoryList = append(newDirectoryList, filepath.Join(parentDir, f.Name()))
+				}
+			}
+		} else {
+			newDirectoryList = append(newDirectoryList, dir)
+		}
+	}
+
+	c.Directories = newDirectoryList
+
+	return
+}
+
+func (c *Config) checkForGit() {
+	newDirectoryList := []string{}
+
+	for _, dir := range c.Directories {
+		if _, err := os.Stat(filepath.Join(dir, ".git")); err == nil {
+			newDirectoryList = append(newDirectoryList, dir)
+		}
+	}
+
+	c.Directories = newDirectoryList
 }

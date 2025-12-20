@@ -31,15 +31,18 @@ ESCAPED_APP = $(subst $(space),\$(space),$(APP))
 EXECUTABLE := $(shell echo $(subst $(space),,$(APP)) | tr '[:upper:]' '[:lower:]')
 BINARY = $(ESCAPED_APP).app/Contents/MacOS/$(EXECUTABLE)
 PLIST = $(ESCAPED_APP).app/Contents/Info.plist
+ICON = $(ESCAPED_APP).app/Contents/Resources/icon.icns
 
-run: $(BINARY) $(PLIST)
+run: $(BINARY) $(PLIST) $(ICON)
 	./$(BINARY)
+
+build: $(BINARY) $(PLIST) $(ICON)
 
 SOURCEDIRS = $(abspath $(dir $(MAKEFILE_LIST)))
 SOURCES := $(shell find $(SOURCEDIRS) $(LIBDIRS) -name '*.go' -o -name '*.m' -o -name '*.h' -o -name '*.c' -o -name '*.mk' -o -name Makefile)
 
 $(BINARY): $(SOURCES)
-	go build -o $(BINARY)
+	go build -o $(BINARY) ./cmd
 
 ZIPFILE = $(ESCAPED_APP).zip
 
@@ -79,7 +82,7 @@ $(PLIST):
 	@echo '  <key>CFBundleExecutable</key>' >> $(PLIST)
 	@echo '  <string>$(EXECUTABLE)</string>' >> $(PLIST)
 	@echo '  <key>CFBundleIconFile</key>' >> $(PLIST)
-	@echo '  <string>icon</string>' >> $(PLIST)
+	@echo '  <string>icon.icns</string>' >> $(PLIST)
 	@echo '  <key>CFBundleGetInfoString</key>' >> $(PLIST)
 	@echo '  <string>$(APP)</string>' >> $(PLIST)
 	@echo '  <key>CFBundleIdentifier</key>' >> $(PLIST)
@@ -104,3 +107,8 @@ $(PLIST):
 .PHONY: sign
 sign: $(BINARY) $(PLIST)
 	codesign -f -s "$(IDENTITY)" $(ESCAPED_APP).app --deep
+
+# Add a rule to copy the icon.icns file
+$(ICON):
+	mkdir -p $(ESCAPED_APP).app/Contents/Resources
+	cp icons/icon.icns $(ICON)

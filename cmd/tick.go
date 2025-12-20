@@ -14,7 +14,7 @@ import (
 func tick(ctx context.Context) {
 	menuet.App().SetMenuState(&menuet.MenuState{Title: "🔍"})
 
-	cfg, err := config.LoadConfig()
+	cfg, err := config.LoadConfig(ctx)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("failed to load config")
 		menuet.App().SetMenuState(&menuet.MenuState{Title: "❌"})
@@ -32,7 +32,7 @@ func tick(ctx context.Context) {
 	success.Store(true)
 	for _, dir := range cfg.Directories {
 		wg.Go(func() {
-			status := checkDir(ctx, dir)
+			status := checkDir(ctx, cfg, dir)
 			success.Store(status && success.Load())
 		})
 	}
@@ -45,11 +45,11 @@ func tick(ctx context.Context) {
 	}
 }
 
-func checkDir(ctx context.Context, dir string) (success bool) {
+func checkDir(ctx context.Context, cfg *config.Config, dir string) (success bool) {
 	zerolog.Ctx(ctx).Info().Str("dir", dir).Msg("checking directory")
-	changes, err := puller.Pull(dir)
+	changes, err := puller.Pull(cfg, dir)
 	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg("failed to fetch")
+		zerolog.Ctx(ctx).Error().Err(err).Str("dir", dir).Msg("failed to fetch")
 		menuet.App().Notification(menuet.Notification{
 			Title:    "Failed to fetch",
 			Subtitle: dir,
@@ -61,9 +61,8 @@ func checkDir(ctx context.Context, dir string) (success bool) {
 	if changes {
 		zerolog.Ctx(ctx).Info().Str("dir", dir).Msg("changes detected")
 		menuet.App().Notification(menuet.Notification{
-			Title:                        "Changes detected and pulled",
-			Subtitle:                     dir,
-			RemoveFromNotificationCenter: true,
+			Title:    "Changes detected and pulled",
+			Subtitle: dir,
 		})
 		success = true
 		return

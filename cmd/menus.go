@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"strings"
 
 	"github.com/adreasnow/auto-pull/internal/pkg/config"
 	"github.com/caseymrm/menuet"
@@ -26,7 +26,7 @@ func menus(ctx context.Context) (items []menuet.MenuItem) {
 }
 
 func showDirectories(ctx context.Context) {
-	cfg, err := config.LoadConfig()
+	cfg, err := config.LoadConfig(ctx)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("failed to load config")
 		menuet.App().SetMenuState(&menuet.MenuState{Title: "❌"})
@@ -37,13 +37,13 @@ func showDirectories(ctx context.Context) {
 		return
 	}
 
-	dirString := ""
+	builder := strings.Builder{}
 	for _, dir := range cfg.Directories {
-		dirString += fmt.Sprintf("• %s\n", dir)
+		builder.WriteString("• " + dir + "\n") //nolint:errcheck
 	}
 
 	menuet.App().Alert(menuet.Alert{
 		MessageText:     "Registered Directories",
-		InformativeText: dirString,
+		InformativeText: builder.String(),
 	})
 }

@@ -28,7 +28,8 @@ func main() {
 	ctx := context.Background()
 
 	logFile := lumberjack.Logger{
-		Filename: path.Join(os.Getenv("HOME"), "Library", "Logs", bundleName, "logs.log"),
+		Filename:   path.Join(os.Getenv("HOME"), "Library", "Logs", bundleName, "logs.log"),
+		MaxBackups: 5,
 	}
 
 	ctx = zerolog.New(
@@ -37,7 +38,7 @@ func main() {
 			&logFile),
 	).With().Timestamp().Logger().WithContext(ctx)
 
-	cfg, err := config.LoadConfig()
+	cfg, err := config.LoadConfig(ctx)
 	if err != nil {
 		menuet.App().Alert(menuet.Alert{
 			MessageText:     "Failed to load config",
@@ -45,7 +46,6 @@ func main() {
 		})
 		zerolog.Ctx(ctx).Fatal().Err(err).Msg("failed to load config")
 	}
-	zerolog.Ctx(ctx).Info().Msg("loaded config")
 
 	go loop(ctx, cfg)
 

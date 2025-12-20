@@ -1,8 +1,20 @@
 [
   {
     "label": "Run",
-    "command": "rm -rf Auto\\ Pull.app && pwd && make",
-    "cwd": "$ZED_WORKTREE_ROOT/cmd",
+    "command": "rm -rf Auto\\ Pull.app && make",
+  },
+  {
+    "label": "Build",
+    "command": "rm -rf Auto\\ Pull.app && make build",
+  },
+  {
+    "label": "Install",
+    "command": "rm -rf Auto\\ Pull.app && make build && cp -r Auto\\ Pull.app /Applications",
+  },
+  {
+    "label": "Generate Icon",
+    "command": "./convert.sh icon.svg",
+    "cwd": "$ZED_WORKTREE_ROOT/icons",
   },
   {
     "label": "Lint w/ GolangCI-Lint",
