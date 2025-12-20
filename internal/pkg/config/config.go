@@ -9,7 +9,6 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/goccy/go-yaml"
 	"github.com/rs/zerolog"
@@ -23,12 +22,6 @@ var (
 	ErrNoDirectories    = fmt.Errorf("no directories specified in config")
 	ErrNoRefreshSeconds = fmt.Errorf("no refreshSeconds specified in config")
 )
-
-type ticker struct {
-	RefreshSeconds int
-	Ticker         time.Ticker
-	TickNow        chan struct{}
-}
 
 type config struct {
 	Directories    []string `yaml:"directories"`
@@ -97,7 +90,11 @@ func (c *config) parseConfig(data []byte) (err error) {
 	}
 
 	c.cleanTildeDirs()
-	c.expandTrailingWildCardDirs()
+	err = c.expandTrailingWildCardDirs()
+	if err != nil {
+		err = fmt.Errorf("failed to expand trailing wild card directories: %w", err)
+		return
+	}
 	c.checkForGit()
 
 	return
