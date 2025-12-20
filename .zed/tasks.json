@@ -4,4 +4,20 @@
     "command": "rm -rf Auto\\ Pull.app && pwd && make",
     "cwd": "$ZED_WORKTREE_ROOT/cmd",
   },
+  {
+    "label": "Lint w/ GolangCI-Lint",
+    "command": "go tool golangci-lint run",
+  },
+  {
+    "label": "Check Spelling",
+    "command": "cspell lint -c .linters/cspell.json --no-relative --show-context .",
+  },
+  {
+    "label": "Run Tests",
+    "command": "go tool gotestsum --format testname --packages=\"./...\" -- -count 1 -v",
+  },
+  {
+    "label": "Generate Coverage",
+    "command": "go tool gotestsum --format testname --packages=\"./...\" -- -count=1 -coverpkg=./... -coverprofile=coverage.out && go tool cover -func=coverage.out && rm -rf coverage.out",
+  },
 ]

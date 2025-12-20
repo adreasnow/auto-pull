@@ -31,7 +31,11 @@ func main() {
 		Filename: path.Join(os.Getenv("HOME"), "Library", "Logs", bundleName, "logs.log"),
 	}
 
-	ctx = zerolog.New(io.MultiWriter(os.Stdout, &logFile)).With().Timestamp().Logger().WithContext(ctx)
+	ctx = zerolog.New(
+		io.MultiWriter(
+			zerolog.ConsoleWriter{Out: os.Stderr},
+			&logFile),
+	).With().Timestamp().Logger().WithContext(ctx)
 
 	cfg, err := config.LoadConfig()
 	if err != nil {

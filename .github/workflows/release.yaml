@@ -1,0 +1,42 @@
+name: Release
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  checks: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  test:
+    name: Run tests
+    uses: ./.github/workflows/test.yaml
+
+  tag:
+    name: Increment Tag
+    needs:
+      - test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Get next version
+        uses: reecetech/version-increment@2024.10.1
+        id: version
+        with:
+          scheme: semver
+          increment: patch
+          tag_prefix: v
+
+      - name: Create tag
+        uses: actions/github-script@v8
+        with:
+          script: |
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/${{ steps.version.outputs.v-version }}',
+              sha: context.sha
+            })

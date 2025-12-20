@@ -34,8 +34,6 @@ func Pull(path string) (changes bool, err error) {
 		return
 	}
 
-	changes = true
-
 	worktree, err := repo.Worktree()
 	if err != nil {
 		err = fmt.Errorf("failed to get worktree: %w", err)
@@ -57,5 +55,6 @@ func Pull(path string) (changes bool, err error) {
 		return
 	}
 
+	changes = true
 	return
 }
