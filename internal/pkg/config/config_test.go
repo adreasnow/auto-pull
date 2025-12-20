@@ -3,6 +3,7 @@ package config
 import (
 	"embed"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -44,7 +45,10 @@ func TestCleanTildeDirs(t *testing.T) {
 
 	cfg.cleanTildeDirs()
 
-	assert.Contains(t, cfg.Directories[0], "/Users")
+	splitLine := strings.Split(cfg.Directories[0], "/")
+	require.Greater(t, len(splitLine), 1)
+
+	assert.Contains(t, []string{"Users", "home"}, splitLine[1])
 
 	fmt.Println(cfg.Directories)
 }

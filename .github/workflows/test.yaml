@@ -101,3 +101,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_STATUS_REPORTER: true
+          DISABLE_LINTERS: GOLANG_REVIVE

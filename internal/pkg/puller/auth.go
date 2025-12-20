@@ -25,7 +25,7 @@ func setupAuth(repo *git.Repository) (auth transport.AuthMethod, remote *git.Rem
 		return
 	}
 
-	switch tp.URL.Scheme {
+	switch tp.Scheme {
 	case "ssh":
 		auth, err = ssh.DefaultAuthBuilder("git")
 		if err != nil {
@@ -46,7 +46,7 @@ func setupAuth(repo *git.Repository) (auth transport.AuthMethod, remote *git.Rem
 		}
 
 	default:
-		err = fmt.Errorf("unsupported scheme: %s", tp.URL.Scheme)
+		err = fmt.Errorf("unsupported scheme: %s", tp.Scheme)
 		return
 	}
 

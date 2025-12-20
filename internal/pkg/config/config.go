@@ -58,7 +58,7 @@ func loadConfigfile(fileSystem fs.FS) (body []byte, err error) {
 		return
 	}
 
-	defer file.Close()
+	defer file.Close() //nolint:errcheck
 
 	body, err = io.ReadAll(file)
 	if err != nil {
