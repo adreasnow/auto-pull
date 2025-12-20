@@ -48,7 +48,6 @@ func Pull(cfg *config.Config, path string) (changes bool, err error) {
 
 	if pullErr != nil {
 		if errors.Is(pullErr, git.NoErrAlreadyUpToDate) {
-			err = fmt.Errorf("changes were detected but repo was already up to date on pull for %s: %w", path, pullErr)
 			return
 		}
 
