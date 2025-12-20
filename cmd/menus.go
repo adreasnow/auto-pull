@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func menus(ctx context.Context) (items []menuet.MenuItem) {
+func menus(cfg *config.Config, ctx context.Context) (items []menuet.MenuItem) {
 	items = []menuet.MenuItem{}
 
 	showRepos := menuet.MenuItem{
@@ -18,8 +18,15 @@ func menus(ctx context.Context) (items []menuet.MenuItem) {
 		Clicked: func() { showDirectories(ctx) },
 	}
 
+	checkNow := menuet.MenuItem{
+		Type:    menuet.Regular,
+		Text:    "Check Now",
+		Clicked: func() { checkNow(cfg, ctx) },
+	}
+
 	items = append(items,
 		showRepos,
+		checkNow,
 	)
 
 	return
@@ -46,4 +53,8 @@ func showDirectories(ctx context.Context) {
 		MessageText:     "Registered Directories",
 		InformativeText: builder.String(),
 	})
+}
+
+func checkNow(cfg *config.Config, ctx context.Context) {
+	cfg.TickNow <- true
 }

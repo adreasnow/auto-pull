@@ -20,9 +20,10 @@ var (
 )
 
 type Config struct {
-	Directories    []string `yaml:"directories"`
-	RefreshSeconds int      `yaml:"refreshSeconds"`
-	GithubToken    string   `yaml:"githubToken"`
+	Directories    []string  `yaml:"directories"`
+	RefreshSeconds int       `yaml:"refreshSeconds"`
+	GithubToken    string    `yaml:"githubToken"`
+	TickNow        chan bool `yaml:"-"`
 }
 
 func LoadConfig(ctx context.Context) (cfg *Config, err error) {
@@ -50,6 +51,8 @@ func LoadConfig(ctx context.Context) (cfg *Config, err error) {
 		err = ErrNoRefreshSeconds
 		return
 	}
+
+	cfg.TickNow = make(chan bool)
 
 	zerolog.Ctx(ctx).Info().
 		Strs("directories", cfg.Directories).

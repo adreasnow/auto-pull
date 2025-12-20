@@ -23,13 +23,6 @@ var (
 	bundleName = "com.github.adreasnow.auto-pull"
 )
 
-func loop(ctx context.Context, cfg *config.Config) {
-	ticker := time.NewTicker(time.Second * time.Duration(cfg.RefreshSeconds))
-	for range ticker.C {
-		tick(ctx)
-	}
-}
-
 func main() {
 	ctx := context.Background()
 
@@ -58,8 +51,21 @@ func main() {
 
 	menuet.App().Label = bundleName
 
-	menuet.App().Children = func() []menuet.MenuItem { return menus(ctx) }
+	menuet.App().Children = func() []menuet.MenuItem { return menus(cfg, ctx) }
 
 	menuet.App().SetMenuState(&menuet.MenuState{Image: successIcon})
 	menuet.App().RunApplication()
+}
+
+func loop(ctx context.Context, cfg *config.Config) {
+	ticker := time.NewTicker(time.Second * time.Duration(cfg.RefreshSeconds))
+	for {
+		select {
+		case <-ticker.C:
+			tick(ctx)
+
+		case <-cfg.TickNow:
+			tick(ctx)
+		}
+	}
 }
