@@ -29,7 +29,7 @@ func showDirectories(ctx context.Context) {
 	cfg, err := config.LoadConfig(ctx)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("failed to load config")
-		menuet.App().SetMenuState(&menuet.MenuState{Title: "❌"})
+		menuet.App().SetMenuState(&menuet.MenuState{Title: "⚠️"})
 		menuet.App().Alert(menuet.Alert{
 			MessageText:     "Failed to load config",
 			InformativeText: err.Error(),

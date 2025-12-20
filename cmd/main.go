@@ -53,6 +53,6 @@ func main() {
 
 	menuet.App().Children = func() []menuet.MenuItem { return menus(ctx) }
 
-	menuet.App().SetMenuState(&menuet.MenuState{Title: "✅"})
+	menuet.App().SetMenuState(&menuet.MenuState{Title: "👍"})
 	menuet.App().RunApplication()
 }
