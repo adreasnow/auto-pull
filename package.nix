@@ -87,6 +87,9 @@ let
       EOF
 
       cp icons/icon.icns "${appName}.app/Contents/Resources/"
+      cp icons/cloud.png "${appName}.app/Contents/Resources/"
+      cp icons/sun.png "${appName}.app/Contents/Resources/"
+      cp icons/warning.png "${appName}.app/Contents/Resources/"
 
       runHook postBuild
     '';
