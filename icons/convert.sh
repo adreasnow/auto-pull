@@ -36,5 +36,8 @@ iconutil -c icns "icon.iconset"
 #cleanup
 rm -R "icon.iconset"
 
+rsvg-convert --width=50 --height=50 sun.svg -o sun.png
+rsvg-convert --width=50 --height=50 warning.svg -o warning.png
+rsvg-convert --width=50 --height=50 cloud.svg -o cloud.png
 
 echo "Done."

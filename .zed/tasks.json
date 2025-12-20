@@ -12,7 +12,7 @@
     "command": "rm -rf Auto\\ Pull.app && make build && cp -r Auto\\ Pull.app /Applications",
   },
   {
-    "label": "Generate Icon",
+    "label": "Generate Icons",
     "command": "./convert.sh icon.svg",
     "cwd": "$ZED_WORKTREE_ROOT/icons",
   },

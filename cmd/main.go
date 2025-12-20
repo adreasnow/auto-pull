@@ -14,6 +14,12 @@ import (
 )
 
 var (
+	warningIcon = "warning.png"
+	successIcon = "sun.png"
+	pullingIcon = "cloud.png"
+)
+
+var (
 	bundleName = "com.github.adreasnow.auto-pull"
 )
 
@@ -53,6 +59,6 @@ func main() {
 
 	menuet.App().Children = func() []menuet.MenuItem { return menus(ctx) }
 
-	menuet.App().SetMenuState(&menuet.MenuState{Title: "👍"})
+	menuet.App().SetMenuState(&menuet.MenuState{Image: successIcon})
 	menuet.App().RunApplication()
 }

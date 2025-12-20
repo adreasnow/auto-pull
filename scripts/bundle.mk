@@ -32,11 +32,14 @@ EXECUTABLE := $(shell echo $(subst $(space),,$(APP)) | tr '[:upper:]' '[:lower:]
 BINARY = $(ESCAPED_APP).app/Contents/MacOS/$(EXECUTABLE)
 PLIST = $(ESCAPED_APP).app/Contents/Info.plist
 ICON = $(ESCAPED_APP).app/Contents/Resources/icon.icns
+CLOUD = $(ESCAPED_APP).app/Contents/Resources/cloud.png
+WARNING = $(ESCAPED_APP).app/Contents/Resources/warning.png
+SUN = $(ESCAPED_APP).app/Contents/Resources/sun.png
 
-run: $(BINARY) $(PLIST) $(ICON)
+run: $(BINARY) $(PLIST) $(ICON) $(CLOUD) $(WARNING) $(SUN)
 	./$(BINARY)
 
-build: $(BINARY) $(PLIST) $(ICON)
+build: $(BINARY) $(PLIST) $(ICON) $(CLOUD) $(WARNING) $(SUN)
 
 SOURCEDIRS = $(abspath $(dir $(MAKEFILE_LIST)))
 SOURCES := $(shell find $(SOURCEDIRS) $(LIBDIRS) -name '*.go' -o -name '*.m' -o -name '*.h' -o -name '*.c' -o -name '*.mk' -o -name Makefile)
@@ -112,3 +115,15 @@ sign: $(BINARY) $(PLIST)
 $(ICON):
 	mkdir -p $(ESCAPED_APP).app/Contents/Resources
 	cp icons/icon.icns $(ICON)
+
+$(CLOUD):
+	mkdir -p $(ESCAPED_APP).app/Contents/Resources
+	cp icons/cloud.png $(CLOUD)
+
+$(WARNING):
+	mkdir -p $(ESCAPED_APP).app/Contents/Resources
+	cp icons/warning.png $(WARNING)
+
+$(SUN):
+	mkdir -p $(ESCAPED_APP).app/Contents/Resources
+	cp icons/sun.png $(SUN)
