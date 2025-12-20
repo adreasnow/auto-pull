@@ -36,6 +36,7 @@ func main() {
 	logFile := lumberjack.Logger{
 		Filename:   path.Join(os.Getenv("HOME"), "Library", "Logs", bundleName, "logs.log"),
 		MaxBackups: 5,
+		MaxSize:    2,
 	}
 
 	ctx = zerolog.New(
