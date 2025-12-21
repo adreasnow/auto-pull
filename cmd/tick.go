@@ -49,31 +49,51 @@ func tick(ctx context.Context, app *menuet.Application) {
 
 func checkDir(ctx context.Context, app *menuet.Application, dir string) (success bool) {
 	zerolog.Ctx(ctx).Info().Str("dir", dir).Msg("checking directory")
-	changes, err := puller.Pull(dir)
+	changes, pulled, msg, repooName, err := puller.Pull(dir)
+
 	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Str("dir", dir).Msg("failed to fetch")
+		zerolog.Ctx(ctx).Error().Err(err).
+			Str("dir", dir).
+			Str("repo", repooName).
+			Bool("changes-detected", changes).
+			Bool("pulled", pulled).
+			Msg("failed to process directory")
 		app.SetMenuState(&menuet.MenuState{Image: warningIcon})
 		app.Notification(menuet.Notification{
-			Title:    "Failed to fetch",
-			Subtitle: dir,
+			Title:    "Failed to process directory",
+			Subtitle: repooName,
 			Message:  err.Error(),
 
 			Identifier: dir,
 		})
 		return
 	}
+
 	if changes {
+
+		notificationTitle := ""
+		if changes && pulled {
+			notificationTitle = "Changes detected and pulled"
+		} else if changes {
+			notificationTitle = "Changes detected but not pulled"
+		}
+
 		zerolog.Ctx(ctx).Info().Str("dir", dir).Msg("changes detected")
 		app.Notification(menuet.Notification{
-			Title:    "Changes detected and pulled",
-			Subtitle: dir,
-
-			Identifier: dir,
+			Title:    notificationTitle,
+			Subtitle: repooName,
+			Message:  msg,
 		})
 		success = true
 		return
 	}
+
 	success = true
-	zerolog.Ctx(ctx).Info().Str("dir", dir).Msg("no changes detected")
+	zerolog.Ctx(ctx).Info().
+		Str("dir", dir).
+		Str("repo", repooName).
+		Bool("changes-detected", changes).
+		Bool("pulled", pulled).
+		Msg("no changes detected")
 	return
 }
