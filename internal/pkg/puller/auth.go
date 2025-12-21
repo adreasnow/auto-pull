@@ -10,6 +10,10 @@ import (
 	"github.com/go-git/go-git/v6/plumbing/transport/http"
 )
 
+var (
+	ErrNoGithubToken = errors.New("githubToken config or GITHUB_TOKEN environment variable not set")
+)
+
 func (d *directory) setupAuth() (err error) {
 	d.remote, err = d.repo.Remote("origin")
 	if err != nil {
@@ -33,10 +37,10 @@ func (d *directory) setupAuth() (err error) {
 	switch tp.Scheme {
 	case "https":
 		token, found := os.LookupEnv("GITHUB_TOKEN")
-		if !found {
+		if !found || token == "" {
 			token = config.Config.GithubToken
 			if token == "" {
-				err = fmt.Errorf("githubToken config or GITHUB_TOKEN environment variable not set")
+				err = ErrNoGithubToken
 				return
 			}
 		}
