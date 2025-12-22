@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/caseymrm/menuet"
 	"github.com/goccy/go-yaml"
 	"github.com/rs/zerolog"
 )
@@ -26,10 +27,10 @@ var (
 type config struct {
 	Directories    []string `yaml:"directories"`
 	RefreshSeconds int      `yaml:"refreshSeconds"`
-	GithubToken    string   `yaml:"githubToken"`
+	GitHubToken    string   `yaml:"-"`
 }
 
-func LoadConfig(ctx context.Context) (err error) {
+func LoadConfig(ctx context.Context, app *menuet.Application) (err error) {
 	dirPath := path.Join(os.Getenv("HOME"), ".config/auto-pull")
 	fileSystem := os.DirFS(dirPath)
 
@@ -53,6 +54,14 @@ func LoadConfig(ctx context.Context) (err error) {
 	if Config.RefreshSeconds == 0 {
 		err = ErrNoRefreshSeconds
 		return
+	}
+
+	if Config.GitHubToken == "" {
+		Config.GitHubToken, err = TokenFlow(ctx, app)
+		if err != nil {
+			err = fmt.Errorf("failed to get github token: %w", err)
+			return
+		}
 	}
 
 	zerolog.Ctx(ctx).Info().

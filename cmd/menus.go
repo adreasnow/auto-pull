@@ -33,7 +33,7 @@ func menus(ctx context.Context, app *menuet.Application) (items []menuet.MenuIte
 }
 
 func showDirectories(ctx context.Context, app *menuet.Application) {
-	err := config.LoadConfig(ctx)
+	err := config.LoadConfig(ctx, app)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("failed to load config")
 		app.SetMenuState(&menuet.MenuState{Image: warningIcon})

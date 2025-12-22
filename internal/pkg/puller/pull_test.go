@@ -106,6 +106,7 @@ func TestFetchNoChanges(t *testing.T) {
 	require.NoError(t, err)
 
 	changes, err := d.fetch()
+	require.Error(t, err)
 
 	assert.False(t, changes, "no changes should be detected when fetch fails")
 }

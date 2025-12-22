@@ -13,8 +13,7 @@ import (
 
 func tick(ctx context.Context, app *menuet.Application) {
 	app.SetMenuState(&menuet.MenuState{Image: pullingIcon})
-
-	err := config.LoadConfig(ctx)
+	err := config.LoadConfig(ctx, app)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("failed to load config")
 		app.SetMenuState(&menuet.MenuState{Image: warningIcon})

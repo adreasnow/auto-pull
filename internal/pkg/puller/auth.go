@@ -3,7 +3,6 @@ package puller
 import (
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/adreasnow/auto-pull/internal/pkg/config"
 	"github.com/go-git/go-git/v6/plumbing/transport"
@@ -36,18 +35,9 @@ func (d *directory) setupAuth() (err error) {
 
 	switch tp.Scheme {
 	case "https":
-		token, found := os.LookupEnv("GITHUB_TOKEN")
-		if !found || token == "" {
-			token = config.Config.GithubToken
-			if token == "" {
-				err = ErrNoGithubToken
-				return
-			}
-		}
-
 		d.auth = &http.BasicAuth{
 			Username: "x-access-token",
-			Password: token,
+			Password: config.Config.GitHubToken,
 		}
 
 	default:

@@ -29,8 +29,7 @@ func TestSetupAuthHTTPS(t *testing.T) {
 	}
 
 	t.Run("success", func(t *testing.T) {
-		testToken := "test-token-123"
-		t.Setenv("GITHUB_TOKEN", testToken)
+		config.Config.GitHubToken = "test-token-123"
 
 		err = d.setupAuth()
 		require.NoError(t, err)
@@ -42,29 +41,11 @@ func TestSetupAuthHTTPS(t *testing.T) {
 		basicAuth, ok := d.auth.(*http.BasicAuth)
 		require.True(t, ok, "auth should be BasicAuth")
 		assert.Equal(t, "x-access-token", basicAuth.Username)
-		assert.Equal(t, testToken, basicAuth.Password)
-	})
-
-	t.Run("success from config", func(t *testing.T) {
-		t.Setenv("GITHUB_TOKEN", "")
-		config.Config.GithubToken = "config-token-456"
-
-		err = d.setupAuth()
-		require.NoError(t, err)
-
-		assert.NotNil(t, d.remote)
-		assert.Equal(t, "origin", d.upstream)
-		assert.NotNil(t, d.auth)
-
-		basicAuth, ok := d.auth.(*http.BasicAuth)
-		require.True(t, ok, "auth should be BasicAuth")
-		assert.Equal(t, "x-access-token", basicAuth.Username)
-		assert.Equal(t, "config-token-456", basicAuth.Password)
+		assert.Equal(t, config.Config.GitHubToken, basicAuth.Password)
 	})
 
 	t.Run("failure no token", func(t *testing.T) {
-		t.Setenv("GITHUB_TOKEN", "")
-		config.Config.GithubToken = ""
+		config.Config.GitHubToken = ""
 
 		err = d.setupAuth()
 		require.Error(t, err)
@@ -106,7 +87,7 @@ func TestSetupAuthUnsupportedScheme(t *testing.T) {
 		repo:     repo,
 	}
 
-	t.Setenv("GITHUB_TOKEN", "test-token-123")
+	config.Config.GitHubToken = "test-token-123"
 
 	err = d.setupAuth()
 	require.ErrorContains(t, err, "unsupported scheme")
