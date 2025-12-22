@@ -64,7 +64,7 @@ jobs:
           echo "NEW_HASH=$NEW_HASH" >> $GITHUB_ENV
 
       - name: Update Nix Package
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         env:
           NEW_VERSION: ${{ needs.tag.outputs.version }}
         with:
