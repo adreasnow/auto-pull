@@ -22,6 +22,12 @@ func loop(app *menuet.Application, ctx context.Context) {
 	tickTime := time.Second * time.Duration(config.Config.RefreshSeconds)
 	ticker := time.NewTicker(tickTime)
 
+	// start a check immediately
+	// must be in goroutine to be non-blocking
+	go func() {
+		tickNow <- struct{}{}
+	}()
+
 	for {
 		select {
 		case <-ticker.C:

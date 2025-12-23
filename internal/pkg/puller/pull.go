@@ -14,7 +14,13 @@ func Pull(path string) (changes bool, pulled bool, commitMsg string, repoName st
 
 	err = dir.setupRepo()
 	if err != nil {
-		err = fmt.Errorf("failed to setup repository %s: %w", path, err)
+		if errors.Is(err, git.ErrRemoteNotFound) {
+			err = nil
+			repoName = "local-only"
+		} else {
+			err = fmt.Errorf("failed to setup repository %s: %w", path, err)
+		}
+
 		return
 	}
 
