@@ -7,7 +7,7 @@
 let
   pname = "auto-pull";
   appName = "Auto Pull";
-  version = "2025.12.9";
+  version = "2025.12.10";
   meta = {
     description = "Auto GitHub Puller";
     mainProgram = "autopull";
@@ -20,7 +20,7 @@ let
     owner = "adreasnow";
     repo = "auto-pull";
     tag = "v${version}";
-    hash = "sha256-6BSsnJqH+KNdKJ4VybDh0ZwAslTJG4dXwqI8TLevLnU=";
+    hash = "sha256-fb5awnXI8Y7sqILiNn39qOGNMRdGL6UQMy9bp0Vg6/k=";
   };
 
   darwin = stdenv.mkDerivation {
