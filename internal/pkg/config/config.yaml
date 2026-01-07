@@ -1,3 +1,7 @@
 directories:
   - /test/path
 refreshSeconds: 60
+notifications:
+  failed: true
+  fetchedNoPull: true
+  success: true

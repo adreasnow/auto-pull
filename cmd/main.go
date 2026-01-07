@@ -16,6 +16,7 @@ var (
 	successIcon = "sun.png"
 	pullingIcon = "cloud.png"
 	bundleName  = "com.github.adreasnow.auto-pull"
+	logFile     = path.Join(os.Getenv("HOME"), "Library", "Logs", bundleName, "logs.log")
 
 	tickNow = make(chan struct{})
 )
@@ -32,7 +33,7 @@ func main() {
 
 func startLogger() context.Context {
 	logFile := lumberjack.Logger{
-		Filename:   path.Join(os.Getenv("HOME"), "Library", "Logs", bundleName, "logs.log"),
+		Filename:   logFile,
 		MaxBackups: 5,
 		MaxSize:    2,
 	}
@@ -40,7 +41,7 @@ func startLogger() context.Context {
 	return zerolog.New(
 		io.MultiWriter(
 			zerolog.ConsoleWriter{Out: os.Stderr},
-			&logFile),
+			zerolog.ConsoleWriter{Out: &logFile, NoColor: true}),
 	).With().Timestamp().Logger().WithContext(context.Background())
 }
 

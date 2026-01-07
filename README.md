@@ -22,7 +22,11 @@ directories:
   - /path/to/directory1
   - ~/path/to/directory2
   - ~/path/to/directory3/*
-refreshSeconds: 30
+refreshSeconds: 30 # defaults to 60
+notifications: # defaults to true
+  failed: true
+  fetchedNoPull: true
+  pulled: true
 ```
 
 Build and run with `cd cmd && make`

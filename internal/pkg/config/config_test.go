@@ -23,26 +23,50 @@ func TestLoad(t *testing.T) {
 
 	assert.Contains(t, string(body), "- /test/path")
 	assert.Contains(t, string(body), "refreshSeconds: 60")
+	assert.Contains(t, string(body), "notifications:")
+	assert.Contains(t, string(body), "  failed: true")
+	assert.Contains(t, string(body), "  fetchedNoPull: true")
+	assert.Contains(t, string(body), "  success: true")
 }
 
 func TestParseConfig(t *testing.T) {
 	t.Parallel()
 
-	// Create a temporary directory with a git repo
-	tempDir := t.TempDir()
-	_, err := git.PlainInit(tempDir, false)
-	require.NoError(t, err)
+	t.Run("directories", func(t *testing.T) {
+		t.Parallel()
 
-	data := fmt.Appendf([]byte{}, "directories:\n  - %s\nrefreshSeconds: 60", tempDir)
+		// Create a temporary directory with a git repo
+		tempDir := t.TempDir()
+		_, err := git.PlainInit(tempDir, false)
+		require.NoError(t, err)
 
-	c := &config{}
+		data := fmt.Appendf([]byte{}, "directories:\n  - %s", tempDir)
 
-	err = c.parseConfig(data)
-	require.NoError(t, err)
+		c := &config{}
 
-	assert.Len(t, c.Directories, 1)
-	assert.Equal(t, c.Directories[0], tempDir)
-	assert.Equal(t, c.RefreshSeconds, 60)
+		err = c.parseConfig(data)
+		require.NoError(t, err)
+
+		assert.Len(t, c.Directories, 1)
+		assert.Equal(t, c.Directories[0], tempDir)
+	})
+
+	t.Run("notifications", func(t *testing.T) {
+		t.Parallel()
+
+		body, err := loadConfigfile(testData)
+		require.NoError(t, err)
+
+		c := &config{}
+
+		err = c.parseConfig(body)
+		require.NoError(t, err)
+
+		assert.Equal(t, c.RefreshSeconds, 60)
+		assert.True(t, c.Notifications.Failed)
+		assert.True(t, c.Notifications.FetchedNoPull)
+		assert.True(t, c.Notifications.Pulled)
+	})
 }
 
 func TestCleanTildeDirs(t *testing.T) {

@@ -16,7 +16,14 @@ import (
 )
 
 var (
-	Config = &config{}
+	Config = &config{
+		RefreshSeconds: 60,
+		Notifications: notifications{
+			Failed:        true,
+			FetchedNoPull: true,
+			Pulled:        true,
+		},
+	}
 )
 
 var (
@@ -25,9 +32,16 @@ var (
 )
 
 type config struct {
-	Directories    []string `yaml:"directories"`
-	RefreshSeconds int      `yaml:"refreshSeconds"`
-	GitHubToken    string   `yaml:"-"`
+	Directories    []string      `yaml:"directories"`
+	RefreshSeconds int           `yaml:"refreshSeconds"`
+	GitHubToken    string        `yaml:"-"`
+	Notifications  notifications `yaml:"notifications"`
+}
+
+type notifications struct {
+	Failed        bool `yaml:"failed"`
+	FetchedNoPull bool `yaml:"fetchedNoPull"`
+	Pulled        bool `yaml:"success"`
 }
 
 func LoadConfig(ctx context.Context, app *menuet.Application) (err error) {
@@ -67,6 +81,10 @@ func LoadConfig(ctx context.Context, app *menuet.Application) (err error) {
 	zerolog.Ctx(ctx).Info().
 		Strs("directories", Config.Directories).
 		Int("refreshSeconds", Config.RefreshSeconds).
+		Dict("notifications", zerolog.Dict().
+			Bool("failed", Config.Notifications.Failed).
+			Bool("fetchedNoPull", Config.Notifications.FetchedNoPull).
+			Bool("success", Config.Notifications.Pulled)).
 		Msg("config loaded")
 
 	return

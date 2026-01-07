@@ -58,31 +58,37 @@ func checkDir(ctx context.Context, app *menuet.Application, dir string) (success
 			Bool("pulled", pulled).
 			Msg("failed to process directory")
 		app.SetMenuState(&menuet.MenuState{Image: warningIcon})
-		app.Notification(menuet.Notification{
-			Title:    "Failed to process directory",
-			Subtitle: repooName,
-			Message:  err.Error(),
 
-			Identifier: dir,
-		})
+		if config.Config.Notifications.Failed {
+			app.Notification(menuet.Notification{
+				Title:    "Failed to process directory",
+				Subtitle: repooName,
+				Message:  err.Error(),
+
+				Identifier: dir,
+			})
+		}
 		return
 	}
 
 	if changes {
-
 		notificationTitle := ""
-		if changes && pulled {
+		if changes && pulled && config.Config.Notifications.Pulled {
 			notificationTitle = "Changes detected and pulled"
-		} else if changes {
+		} else if changes && config.Config.Notifications.FetchedNoPull {
 			notificationTitle = "Changes detected but not pulled"
 		}
 
 		zerolog.Ctx(ctx).Info().Str("dir", dir).Msg("changes detected")
-		app.Notification(menuet.Notification{
-			Title:    notificationTitle,
-			Subtitle: repooName,
-			Message:  msg,
-		})
+
+		if notificationTitle != "" {
+			app.Notification(menuet.Notification{
+				Title:    notificationTitle,
+				Subtitle: repooName,
+				Message:  msg,
+			})
+		}
+
 		success = true
 		return
 	}
