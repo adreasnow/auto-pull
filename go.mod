@@ -5,7 +5,7 @@ go 1.25.5
 require (
 	github.com/caseymrm/menuet v1.0.3
 	github.com/go-git/go-git/v6 v6.0.0-20251216093047-22c365fcee9c
-	github.com/goccy/go-yaml v1.19.1
+	github.com/goccy/go-yaml v1.19.2
 	github.com/rs/zerolog v1.34.0
 	github.com/stretchr/testify v1.11.1
 	github.com/zalando/go-keyring v0.2.6
