@@ -1,11 +1,7 @@
 [
   {
-    "label": "Run",
-    "command": "rm -rf Auto\\ Pull.app && make",
-  },
-  {
     "label": "Build",
-    "command": "rm -rf Auto\\ Pull.app && make build",
+    "command": "rm -rf dist && goreleaser build --snapshot --clean ",
   },
   {
     "label": "Generate Icons",

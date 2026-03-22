@@ -1,0 +1,123 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+version: 2
+
+project_name: auto-pull
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: autopull
+    main: ./cmd
+    binary: autopull
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=1
+    hooks:
+      post:
+        # 1. Generate Info.plist (shared across architectures) into dist/
+        # 2. Assemble the full macOS .app bundle per target
+        # 3. Zip the .app bundle for direct-download from GitHub Releases
+        - cmd: >-
+            bash -c '
+            set -euo pipefail;
+
+            P="dist/Info.plist";
+            if [ ! -f "$P" ]; then
+              echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" > "$P";
+              echo "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">" >> "$P";
+              echo "<plist version=\"1.0\">" >> "$P";
+              echo "<dict>" >> "$P";
+              echo "  <key>CFBundleExecutable</key>" >> "$P";
+              echo "  <string>autopull</string>" >> "$P";
+              echo "  <key>CFBundleIconFile</key>" >> "$P";
+              echo "  <string>icon.icns</string>" >> "$P";
+              echo "  <key>CFBundleGetInfoString</key>" >> "$P";
+              echo "  <string>Auto Pull</string>" >> "$P";
+              echo "  <key>CFBundleIdentifier</key>" >> "$P";
+              echo "  <string>com.github.adreasnow.auto-pull</string>" >> "$P";
+              echo "  <key>CFBundleName</key>" >> "$P";
+              echo "  <string>Auto Pull</string>" >> "$P";
+              echo "  <key>CFBundleShortVersionString</key>" >> "$P";
+              echo "  <string>{{ .Version }}</string>" >> "$P";
+              echo "  <key>CFBundleInfoDictionaryVersion</key>" >> "$P";
+              echo "  <string>6.0</string>" >> "$P";
+              echo "  <key>CFBundlePackageType</key>" >> "$P";
+              echo "  <string>APPL</string>" >> "$P";
+              echo "  <key>IFMajorVersion</key>" >> "$P";
+              echo "  <integer>0</integer>" >> "$P";
+              echo "  <key>IFMinorVersion</key>" >> "$P";
+              echo "  <integer>1</integer>" >> "$P";
+              echo "  <key>NSHighResolutionCapable</key><true/>" >> "$P";
+              echo "  <key>NSSupportsAutomaticGraphicsSwitching</key><true/>" >> "$P";
+              echo "</dict>" >> "$P";
+              echo "</plist>" >> "$P";
+            fi;
+
+            BUNDLE="dist/Auto Pull_{{ .Target }}.app";
+            mkdir -p "${BUNDLE}/Contents/MacOS" "${BUNDLE}/Contents/Resources";
+            cp "{{ .Path }}" "${BUNDLE}/Contents/MacOS/autopull";
+            cp dist/Info.plist "${BUNDLE}/Contents/";
+            cp icons/icon.icns "${BUNDLE}/Contents/Resources/";
+            cp icons/cloud.png icons/sun.png icons/warning.png "${BUNDLE}/Contents/Resources/";
+            cd dist;
+            zip -ry "Auto Pull_{{ .Target }}.zip" "Auto Pull_{{ .Target }}.app"
+            '
+
+# Flat archive used by the Homebrew formula.
+# Contains: autopull binary, icons, and Info.plist — all at the root level.
+# The formula's install block reconstructs the .app bundle structure.
+archives:
+  - id: homebrew
+    format: zip
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - src: icons/icon.icns
+        strip_parent: true
+      - src: icons/cloud.png
+        strip_parent: true
+      - src: icons/sun.png
+        strip_parent: true
+      - src: icons/warning.png
+        strip_parent: true
+      - src: dist/Info.plist
+        strip_parent: true
+
+brews:
+  - ids:
+      - homebrew
+    repository:
+      owner: adreasnow
+      name: homebrew-tap
+      token: "{{ .Env.TAPS_KEY }}"
+    homepage: "https://github.com/adreasnow/auto-pull"
+    description: "Automatically pull git repositories on a schedule (macOS menu bar app)"
+    install: |
+      app_contents = prefix/"Auto Pull.app"/"Contents"
+      (app_contents/"MacOS").install "autopull"
+      (app_contents/"Resources").install "icon.icns", "cloud.png", "sun.png", "warning.png"
+      app_contents.install "Info.plist"
+
+# Attach the ready-to-run .app zip bundles alongside the flat Homebrew archives.
+release:
+  extra_files:
+    - glob: "dist/Auto Pull_*.zip"
+
+checksum:
+  name_template: checksums.txt
+  extra_files:
+    - glob: "dist/Auto Pull_*.zip"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "\\[AUTOMATED\\]"

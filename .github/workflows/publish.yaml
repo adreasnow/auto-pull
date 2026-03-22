@@ -1,4 +1,5 @@
-name: Publish Nix package
+name: Release
+
 on:
   push:
     branches:
@@ -12,7 +13,7 @@ jobs:
     name: Increment Tag
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.version.outputs.version }}
+      version: ${{ steps.version.outputs.v-version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -36,53 +37,31 @@ jobs:
               sha: context.sha
             })
 
-  package:
-    name: Update Nix Package
+  goreleaser:
+    name: GoReleaser
     needs:
       - tag
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v21
+      - name: Fetch new tag
+        run: git fetch --tags
 
-      - name: Get new hash
-        id: hash
-        run: |
-          NEW_HASH=$(nix-build -E '
-            with import <nixpkgs> {};
-            fetchFromGitHub {
-              owner = "adreasnow";
-              repo = "auto-pull";
-              rev = "main";
-              hash = lib.fakeHash;
-            }
-          ' 2>&1 | grep "got:" | awk "{print \$2}")
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
 
-          echo "NEW_HASH=$NEW_HASH" >> $GITHUB_ENV
-
-      - name: Update Nix Package
-        uses: actions/github-script@v8
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: latest
+          args: release --clean
         env:
-          NEW_VERSION: ${{ needs.tag.outputs.version }}
-        with:
-          script: |
-            const fs = require("fs");
-
-            let content = fs.readFileSync("package.nix", "utf8");
-
-            const version = process.env.NEW_VERSION;
-            const hash = process.env.NEW_HASH;
-
-            content = content.replace(/version = ".*?";/, `version = "${version}";`);
-            content = content.replace(/hash = "sha256-.*?";/, `hash = "${hash}";`);
-
-            fs.writeFileSync("package.nix", content, "utf8");
-
-      - name: Commit and push changes
-        uses: stefanzweifel/git-auto-commit-action@v7
-        with:
-          commit_message: "[AUTOMATED] Update package.nix  for tag ${{ steps.tag.outputs.version }}"
-          file_pattern: package.nix
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAPS_KEY: ${{ secrets.TAPS_KEY }}
+          GORELEASER_CURRENT_TAG: ${{ needs.tag.outputs.version }}
