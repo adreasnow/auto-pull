@@ -1,21 +1,30 @@
 # Auto-pull
 
-Janky little go program that iterates over a list of directories and checks for updates.
+A macOS menu bar app that monitors a list of git directories and automatically pulls updates.
 
-Uses [github.com/caseymrm/menuet](https://github.com/caseymrm/menuet) for a simple taskbar UI.
+Uses [github.com/caseymrm/menuet](https://github.com/caseymrm/menuet) for the menu bar UI.
 
-## Building
+## Install
 
-- `make` will build and run the app
-- `make build` will build the app without running it
+### Homebrew
 
-## Running
+```sh
+brew install --cask adreasnow/tap/auto-pull
+```
 
-Config is in `~/.config/auto-pull/config.yaml` and looks like this:
+### Manual
 
-- Note that wildcards are only supported as the last entry
-- Only github repos are supported and only via the `https` protocol
-- Upon launching, the program will query for a token and save it to the keychain. The token must have contents:read permissions for your repos.
+Download the latest `.app` zip for your architecture from the [releases page](https://github.com/adreasnow/auto-pull/releases), unzip it, and move `Auto Pull.app` to `/Applications`.
+
+> **Note:** The app is not codesigned. On first launch macOS may block it — right-click the app and choose **Open**, or run:
+>
+> ```sh
+> xattr -dr com.apple.quarantine /Applications/Auto\ Pull.app
+> ```
+
+## Configuration
+
+Config lives at `~/.config/auto-pull/config.yaml`:
 
 ```yaml
 directories:
@@ -29,4 +38,25 @@ notifications: # defaults to true
   pulled: true
 ```
 
-Build and run with `cd cmd && make`
+- Wildcards (`*`) are only supported as the last path component
+- Only GitHub repos over `https` are supported
+- On first launch the app will prompt for a GitHub token and store it in the keychain — the token needs `contents:read` permission for your repos
+
+Logs are written to `~/Library/Logs/com.github.adreasnow.auto-pull/`.
+
+## Building
+
+### With GoReleaser (recommended)
+
+```sh
+goreleaser build --snapshot --clean
+```
+
+The resulting `.app` bundle will be in `dist/`.
+
+### With Make
+
+```sh
+make build   # build the .app bundle
+make         # build and run
+```
