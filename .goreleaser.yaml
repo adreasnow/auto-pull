@@ -10,7 +10,9 @@ before:
 builds:
   - id: autopull
     main: ./cmd
-    binary: autopull
+    # Using a path here places the binary inside the .app bundle structure
+    # within the archive automatically — no wrap_in_directory needed.
+    binary: "Auto Pull.app/Contents/MacOS/autopull"
     goos:
       - darwin
     goarch:
@@ -20,13 +22,11 @@ builds:
       - CGO_ENABLED=1
     hooks:
       post:
-        # 1. Generate Info.plist (shared across architectures) into dist/
-        # 2. Assemble the full macOS .app bundle per target
-        # 3. Zip the .app bundle for direct-download from GitHub Releases
+        # Generate Info.plist into dist/ so the archive can pick it up.
+        # Guarded so the second architecture build doesn't regenerate it.
         - cmd: >-
             bash -c '
             set -euo pipefail;
-
             P="dist/Info.plist";
             if [ ! -f "$P" ]; then
               echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" > "$P";
@@ -57,61 +57,74 @@ builds:
               echo "  <key>NSSupportsAutomaticGraphicsSwitching</key><true/>" >> "$P";
               echo "</dict>" >> "$P";
               echo "</plist>" >> "$P";
-            fi;
-
-            BUNDLE="dist/Auto Pull_{{ .Target }}.app";
-            mkdir -p "${BUNDLE}/Contents/MacOS" "${BUNDLE}/Contents/Resources";
-            cp "{{ .Path }}" "${BUNDLE}/Contents/MacOS/autopull";
-            cp dist/Info.plist "${BUNDLE}/Contents/";
-            cp icons/icon.icns "${BUNDLE}/Contents/Resources/";
-            cp icons/cloud.png icons/sun.png icons/warning.png "${BUNDLE}/Contents/Resources/";
-            cd dist;
-            zip -ry "Auto Pull_{{ .Target }}.zip" "Auto Pull_{{ .Target }}.app"
+            fi
             '
 
-# Flat archive used by the Homebrew formula.
-# Contains: autopull binary, icons, and Info.plist — all at the root level.
-# The formula's install block reconstructs the .app bundle structure.
+# Each archive is a zip containing a complete macOS .app bundle:
+#
+#   Auto Pull.app/
+#     Contents/
+#       Info.plist
+#       MacOS/
+#         autopull          <- from the build binary path
+#       Resources/
+#         icon.icns
+#         cloud.png
+#         sun.png
+#         warning.png
+#
 archives:
-  - id: homebrew
+  - id: app-bundle
     format: zip
-    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    name_template: "auto-pull_darwin_{{ .Arch }}"
     files:
+      - src: dist/Info.plist
+        dst: "Auto Pull.app/Contents"
+        strip_parent: true
       - src: icons/icon.icns
+        dst: "Auto Pull.app/Contents/Resources"
         strip_parent: true
       - src: icons/cloud.png
+        dst: "Auto Pull.app/Contents/Resources"
         strip_parent: true
       - src: icons/sun.png
+        dst: "Auto Pull.app/Contents/Resources"
         strip_parent: true
       - src: icons/warning.png
-        strip_parent: true
-      - src: dist/Info.plist
+        dst: "Auto Pull.app/Contents/Resources"
         strip_parent: true
 
-brews:
-  - ids:
-      - homebrew
+homebrew_casks:
+  - name: auto-pull
+    ids:
+      - app-bundle
+    # Injects an `app` stanza at the top of the cask so Homebrew symlinks
+    # the .app bundle into /Applications on install.
+    custom_block: |
+      app "Auto Pull.app"
+    binaries:
+      - "Auto Pull.app/Contents/MacOS/autopull"
     repository:
       owner: adreasnow
       name: homebrew-tap
       token: "{{ .Env.TAPS_KEY }}"
     homepage: "https://github.com/adreasnow/auto-pull"
     description: "Automatically pull git repositories on a schedule (macOS menu bar app)"
-    install: |
-      app_contents = prefix/"Auto Pull.app"/"Contents"
-      (app_contents/"MacOS").install "autopull"
-      (app_contents/"Resources").install "icon.icns", "cloud.png", "sun.png", "warning.png"
-      app_contents.install "Info.plist"
-
-# Attach the ready-to-run .app zip bundles alongside the flat Homebrew archives.
-release:
-  extra_files:
-    - glob: "dist/Auto Pull_*.zip"
+    # Strip the quarantine attribute so macOS does not block the unsigned app.
+    hooks:
+      post:
+        install: |
+          system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/Auto Pull.app"]
+    uninstall:
+      quit:
+        - "com.github.adreasnow.auto-pull"
+    zap:
+      trash:
+        - "~/.config/auto-pull"
+        - "~/Library/Logs/com.github.adreasnow.auto-pull"
 
 checksum:
   name_template: checksums.txt
-  extra_files:
-    - glob: "dist/Auto Pull_*.zip"
 
 changelog:
   sort: asc
