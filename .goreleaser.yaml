@@ -75,7 +75,7 @@ builds:
 #
 archives:
   - id: app-bundle
-    format: zip
+    formats: [zip]
     name_template: "auto-pull_darwin_{{ .Arch }}"
     files:
       - src: dist/Info.plist
