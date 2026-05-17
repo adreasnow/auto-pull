@@ -7,7 +7,8 @@ import (
 
 	"github.com/go-git/go-git/v6"
 	"github.com/go-git/go-git/v6/plumbing"
-	"github.com/go-git/go-git/v6/plumbing/transport"
+	"github.com/go-git/go-git/v6/plumbing/client"
+	"github.com/go-git/go-git/v6/plumbing/transport/http"
 )
 
 type directory struct {
@@ -16,7 +17,7 @@ type directory struct {
 	defaultBranch string
 
 	repo     *git.Repository
-	auth     transport.AuthMethod
+	auth     *http.BasicAuth
 	remote   *git.Remote
 	worktree *git.Worktree
 	head     *plumbing.Reference
@@ -43,7 +44,9 @@ func (d *directory) setupRepo() (err error) {
 
 func (d *directory) getDefaultBranch() (err error) {
 	refs, err := d.remote.List(&git.ListOptions{
-		Auth: d.auth,
+		ClientOptions: []client.Option{
+			client.WithHTTPAuth(d.auth),
+		},
 	})
 	if err != nil {
 		err = fmt.Errorf("failed to list remote references: %w", err)
