@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-git/go-git/v6"
+	"github.com/go-git/go-git/v6/plumbing/client"
 )
 
 func Pull(path string) (changes bool, pulled bool, commitMsg string, repoName string, err error) {
@@ -51,7 +52,9 @@ func Pull(path string) (changes bool, pulled bool, commitMsg string, repoName st
 
 func (d *directory) fetch() (changes bool, err error) {
 	fetchErr := d.remote.Fetch(&git.FetchOptions{
-		Auth:       d.auth,
+		ClientOptions: []client.Option{
+			client.WithHTTPAuth(d.auth),
+		},
 		RemoteName: d.upstream,
 	})
 
@@ -72,7 +75,9 @@ func (d *directory) fetch() (changes bool, err error) {
 func (d *directory) pull() (pulled bool, commitMsg string, err error) {
 	pullErr := d.worktree.Pull(&git.PullOptions{
 		RemoteName: d.upstream,
-		Auth:       d.auth,
+		ClientOptions: []client.Option{
+			client.WithHTTPAuth(d.auth),
+		},
 	})
 
 	if pullErr != nil {

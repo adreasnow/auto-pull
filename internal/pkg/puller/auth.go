@@ -3,9 +3,9 @@ package puller
 import (
 	"errors"
 	"fmt"
+	"net/url"
 
 	"github.com/adreasnow/auto-pull/internal/pkg/config"
-	"github.com/go-git/go-git/v6/plumbing/transport"
 	"github.com/go-git/go-git/v6/plumbing/transport/http"
 )
 
@@ -27,9 +27,9 @@ func (d *directory) setupAuth() (err error) {
 		return
 	}
 
-	tp, err := transport.NewEndpoint(d.remote.Config().URLs[0])
+	tp, err := url.Parse(d.remote.Config().URLs[0])
 	if err != nil {
-		err = fmt.Errorf("failed to create transport endpoint: %w", err)
+		err = fmt.Errorf("failed to parse URL: %w", err)
 		return
 	}
 
