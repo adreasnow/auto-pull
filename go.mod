@@ -3,7 +3,7 @@ module github.com/adreasnow/auto-pull
 go 1.25.5
 
 require (
-	github.com/caseymrm/menuet v1.2.0
+	github.com/caseymrm/menuet v1.2.1
 	github.com/go-git/go-git/v6 v6.0.0-alpha.4
 	github.com/goccy/go-yaml v1.19.2
 	github.com/rs/zerolog v1.35.1
